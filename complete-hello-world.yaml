@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: hello-world-task
+spec:
+  steps:
+    - name: say-hello
+      image: alpine
+      script: |
+        #!/bin/sh
+        echo "Hello, World!"
+
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: hello-world-pipeline
+spec:
+  tasks:
+    - name: run-hello
+      taskRef:
+        name: hello-world-task
+
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: hello-world-pipelinerun
+spec:
+  pipelineRef:
+    name: hello-world-pipeline
+

@@ -1,0 +1,7 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: my-first-pipeline-run
+spec:
+  pipelineRef:
+    name: my-first-pipeline

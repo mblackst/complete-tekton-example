@@ -1,0 +1,73 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: buildah-quay-pipelinerun
+spec:
+  pipelineSpec:
+    workspaces:
+      - name: shared-data
+    tasks:
+      - name: write-dockerfile
+        workspaces:
+          - name: shared-data
+            workspace: shared-data
+        taskSpec:
+          workspaces:
+            - name: shared-data
+          steps:
+            - name: create-dockerfile
+              image: busybox
+              script: |
+                #!/bin/sh
+                mkdir -p $(workspaces.shared-data.path)
+                echo 'FROM alpine' > $(workspaces.shared-data.path)/Dockerfile
+                echo 'CMD ["echo", "Hello from Buildah-built image"]' >> $(workspaces.shared-data.path)/Dockerfile
+                echo "✅ Dockerfile written"
+
+      - name: build-and-push
+        runAfter: [write-dockerfile]
+        workspaces:
+          - name: shared-data
+            workspace: shared-data
+        taskSpec:
+          workspaces:
+            - name: shared-data
+          steps:
+            - name: buildah-push
+              image: quay.io/buildah/stable
+              securityContext:
+                privileged: true
+              workingDir: $(workspaces.shared-data.path)
+              volumeMounts:
+                - name: quay-secret
+                  mountPath: /auth
+              env:
+                - name: REGISTRY_AUTH_FILE
+                  value: /auth/.dockerconfigjson
+              script: |
+                #!/bin/sh
+                set -e
+                IMAGE="quay.io/mblackst1/hello-app:latest"
+                echo "Building image ${IMAGE} with Buildah..."
+                buildah --storage-driver=vfs bud -t "${IMAGE}" .
+                echo "Pushing image ${IMAGE} to Quay.io..."
+                buildah --storage-driver=vfs push "${IMAGE}" "docker://${IMAGE}"
+                echo "✅ Image pushed successfully."
+
+          volumes:
+            - name: quay-secret
+              secret:
+                secretName: quay-credentials
+                items:
+                  - key: .dockerconfigjson
+                    path: .dockerconfigjson
+
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 100Mi
+

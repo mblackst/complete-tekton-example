@@ -1,0 +1,57 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: buildah-hello-pipelinerun
+spec:
+  pipelineSpec:
+    workspaces:
+      - name: shared-data
+    tasks:
+      - name: write-dockerfile
+        workspaces:
+          - name: shared-data
+            workspace: shared-data
+        taskSpec:
+          workspaces:
+            - name: shared-data
+          steps:
+            - name: create-dockerfile
+              image: busybox
+              script: |
+                #!/bin/sh
+                mkdir -p $(workspaces.shared-data.path)
+                echo 'FROM alpine' > $(workspaces.shared-data.path)/Dockerfile
+                echo 'CMD ["echo", "Hello from Buildah-built image"]' >> $(workspaces.shared-data.path)/Dockerfile
+                echo "✅ Dockerfile written to $(workspaces.shared-data.path)/Dockerfile"
+
+      - name: build-image
+        runAfter: [write-dockerfile]
+        workspaces:
+          - name: shared-data
+            workspace: shared-data
+        taskSpec:
+          workspaces:
+            - name: shared-data
+          steps:
+            - name: build-with-buildah
+              image: quay.io/buildah/stable
+              workingDir: $(workspaces.shared-data.path)
+              securityContext:
+                privileged: true
+              script: |
+                #!/bin/sh
+                echo "Listing workspace contents:"
+                ls -l $(workspaces.shared-data.path)
+                echo "Building image with Buildah..."
+                buildah bud --storage-driver=vfs -t testimage:latest .
+
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Mi
+
