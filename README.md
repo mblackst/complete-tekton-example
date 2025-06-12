@@ -156,6 +156,7 @@ https://quay.io/repository/mblackst1/hello-app
 Let me know if you'd like help extending the pipeline!
 
 
+```bash
 kubectl apply -f new-buildah-hello-pipeline.yaml
 tkn pipelinerun logs -f -n default buildah-hello-pipelinerun
 
@@ -165,5 +166,6 @@ kubectl create secret docker-registry quay-credentials \
   --docker-username=mblackst1+builderbot \
   --docker-password=CLS5PFQ3KB3VP6TKGEY45RFSJ6ASLMRVVECVQU8WFLKQWHWHB8ID4HNRSWBP6V4G \
   --docker-email=dummy@example.com
+```
 
 
