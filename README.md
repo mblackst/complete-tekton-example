@@ -32,7 +32,7 @@ kubectl create secret docker-registry quay-credentials \
 
 ## 📝 2. Tekton Pipeline YAML
 
-Save the following as `buildah-quay-pipeline.yaml`:
+Save the following as `quay-new-buildah-hello-pipeline.yaml`:
 
 ```yaml
 apiVersion: tekton.dev/v1
@@ -116,7 +116,7 @@ spec:
 Apply the pipeline YAML:
 
 ```bash
-kubectl apply -f buildah-quay-pipeline.yaml
+kubectl apply -f quay-new-buildah-hello-pipeline.yaml
 ```
 
 Check the logs:
