@@ -1,0 +1,19 @@
+name: YAML Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Run yamllint
+        run: yamllint $(git ls-files '*.yaml')
